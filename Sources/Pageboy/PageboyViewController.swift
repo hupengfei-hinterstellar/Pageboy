@@ -159,6 +159,17 @@ open class PageboyViewController: UIViewController {
     /// Whether the view controllers in the page view controller are currently updating.
     internal var isUpdatingViewControllers: Bool = false
 
+    /// Whether paging is still using the current data source. Read on the main thread
+    /// before replacing pages, including during cancelled gestures and cache refreshes.
+    public var isTransitioning: Bool {
+        return isTransitioningInteractively || isUpdatingViewControllers || isScrollingAnimated ||
+            activeTransitionOperation != nil ||
+            (pageViewController as? PatchedPageViewController)?.isSettingViewControllers == true ||
+            pageViewController?.scrollView?.isProbablyActiveInScroll == true
+    }
+
+    internal var isTransitioningInteractively = false
+
     /// Custom transition to use when animating scrolls between pages.
     /// Setting this to `nil` will revert to using the standard UIPageViewController animation.
     open var transition: Transition?
@@ -396,6 +407,10 @@ extension PageboyViewController {
                                     willTransitionTo: [viewController],
                                     animated: animated)
 
+            // A delegate may have started another update synchronously.
+            guard isSafeToScrollToANewPage(ignoringPosition: force) else {
+                return false
+            }
             isScrollingAnimated = animated
             let direction = NavigationDirection.forPageScroll(to: page, at: rawIndex, in: self)
 
@@ -451,7 +466,9 @@ extension PageboyViewController {
     }
     
     private func isSafeToScrollToANewPage(ignoringPosition: Bool) -> Bool {
-        guard let pageViewController = pageViewController else {
+        guard let pageViewController = pageViewController,
+            !isUpdatingViewControllers,
+            (pageViewController as? PatchedPageViewController)?.isSettingViewControllers != true else {
             return false
         }
         if ignoringPosition { // if ignoring position then escape and mark as safe.
@@ -459,15 +476,10 @@ extension PageboyViewController {
         }
 
         // guard against any active interactive scrolling
-        guard pageViewController.scrollView?.isProbablyActiveInScroll == false &&
+        guard !isTransitioning &&
             isPositionedOnPageIndex else {
                 return false
         }
-        // guard against any current transition operation
-        guard isScrollingAnimated == false else {
-            return false
-        }
-
         return true
     }
 

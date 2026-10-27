@@ -19,6 +19,7 @@ extension PageboyViewController: UIPageViewControllerDelegate {
             return
         }
 
+        isTransitioningInteractively = true
         self.pageViewController(pageViewController,
                                 willTransitionTo: pendingViewControllers,
                                 animated: false)
@@ -54,6 +55,7 @@ extension PageboyViewController: UIPageViewControllerDelegate {
         
         guard pageViewControllerIsActual(pageViewController) else {
             return }
+        defer { isTransitioningInteractively = false }
                 
         guard completed else {
             guard let expectedIndex = expectedTransitionIndex else {

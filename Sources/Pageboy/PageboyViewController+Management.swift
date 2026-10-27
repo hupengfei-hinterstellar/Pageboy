@@ -218,6 +218,7 @@ internal extension PageboyViewController {
     }
     
     private func destroyCurrentPageViewController() {
+        isTransitioningInteractively = false
         pageViewController?.view.removeFromSuperview()
         pageViewController?.removeFromParent()
         pageViewController = nil

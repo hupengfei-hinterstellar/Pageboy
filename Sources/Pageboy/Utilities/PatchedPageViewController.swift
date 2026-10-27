@@ -10,7 +10,7 @@ import UIKit
 /// Fixes not updating dataSource on animated setViewControllers. See: https://stackoverflow.com/a/13253884/715593
 internal class PatchedPageViewController: UIPageViewController {
 
-    private var isSettingViewControllers = false
+    private(set) var isSettingViewControllers = false
 
     override func setViewControllers(_ viewControllers: [UIViewController]?, direction: UIPageViewController.NavigationDirection, animated: Bool, completion: ((Bool) -> Void)? = nil) {
         guard !isSettingViewControllers else {
